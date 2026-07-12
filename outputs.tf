@@ -1,3 +1,7 @@
+output "eventgrid_domain_topics_id" {
+  description = "Map of id values across all eventgrid_domain_topics, keyed the same as var.eventgrid_domain_topics"
+  value       = { for k, v in azurerm_eventgrid_domain_topic.eventgrid_domain_topics : k => v.id }
+}
 output "eventgrid_domain_topics_domain_name" {
   description = "Map of domain_name values across all eventgrid_domain_topics, keyed the same as var.eventgrid_domain_topics"
   value       = { for k, v in azurerm_eventgrid_domain_topic.eventgrid_domain_topics : k => v.domain_name }
