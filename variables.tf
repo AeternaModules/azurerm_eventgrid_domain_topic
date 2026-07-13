@@ -12,27 +12,46 @@ EOT
     name                = string
     resource_group_name = string
   }))
-  # --- Unconfirmed validation candidates, derived from azurerm_eventgrid_domain_topic's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: name
-  #   source:    validation.All(...) - no translation rule yet, add one
-  # path: domain_name
-  #   source:    validation.All(...) - no translation rule yet, add one
-  # path: resource_group_name
-  #   condition: length(value) <= 90
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  # path: resource_group_name
-  #   condition: !endswith(value, ".")
-  #   message:   [from resourcegroups.ValidateName: must not end with "."]
-  #   source:    [from resourcegroups.ValidateName: must not end with "."]
-  # path: resource_group_name
-  #   condition: length(value) != 0
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  # path: resource_group_name
-  #   source:    [from resourcegroups.ValidateName] !matched
+  validation {
+    condition = alltrue([
+      for k, v in var.eventgrid_domain_topics : (
+        (length(v.name) > 0) && (can(regex("^[-a-zA-Z0-9]{3,128}$", v.name)))
+      )
+    ])
+    error_message = "all of: must not be empty; EventGrid domain topic name must be 3 - 128 characters long, contain only letters, numbers and hyphens."
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.eventgrid_domain_topics : (
+        (length(v.domain_name) > 0) && (can(regex("^[-a-zA-Z0-9]{3,50}$", v.domain_name)))
+      )
+    ])
+    error_message = "all of: must not be empty; EventGrid domain name must be 3 - 50 characters long, contain only letters, numbers and hyphens."
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.eventgrid_domain_topics : (
+        length(v.resource_group_name) <= 90
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) > 90]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.eventgrid_domain_topics : (
+        !endswith(v.resource_group_name, ".")
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: must not end with \".\"]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.eventgrid_domain_topics : (
+        length(v.resource_group_name) != 0
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) == 0]"
+  }
+  # Note: 1 additional provider-side validator is enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
